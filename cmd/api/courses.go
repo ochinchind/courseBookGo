@@ -14,6 +14,7 @@ func (app *application) createCourseHandler(w http.ResponseWriter, r *http.Reque
 		Runtime int32	`json:"runtime"`
 		Subjects []string `json:"subjects"`
 	}
+	
 
 	err := app.readJSON(w, r, &input)
 
