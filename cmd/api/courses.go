@@ -2,6 +2,7 @@ package main
 
 import (
 	"coursego/internal/data"
+	"coursego/internal/validator"
 	"fmt"
 	"net/http"
 	"time"
@@ -9,19 +10,32 @@ import (
 
 func (app *application) createCourseHandler(w http.ResponseWriter, r *http.Request) {
 	var input struct {
-		Title	string	`json:"title"`
-		Year	int32	`json:"year"`
-		Runtime int32	`json:"runtime"`
-		Subjects []string `json:"subjects"`
+		Title	 string		 `json:"title"`
+		Year	 int32		 `json:"year"`
+		Runtime  data.Runtime `json:"runtime"` 
+		Subjects []string 	 `json:"subjects"`
 	}
 	
 
 	err := app.readJSON(w, r, &input)
-
 	if err != nil {
 		app.badRequestResponse(w, r, err)
 		return
 	}
+	course := &data.Course{ 
+		Title: input.Title, 
+		Year: input.Year, 
+		Runtime: input.Runtime, 
+		Subjects: input.Subjects,
+	}
+
+	v := validator.New()
+
+	if data.ValidateCourse(v, course); !v.Valid() {
+		app.failedValidationResponse(w, r, v.Errors)
+		return
+	}
+
 	fmt.Fprintf(w, "%+v\n", input) 
 }
 
