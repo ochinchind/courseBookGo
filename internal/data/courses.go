@@ -1,6 +1,8 @@
 package data
 
-import(
+import (
+	"encoding/json"
+	"fmt"
 	"time"
 )
 
@@ -9,7 +11,26 @@ type Course struct {
 	CreatedAt 	time.Time  			`json:"-"`
 	Title 		string	 			`json:"title"`
 	Year 		int32	 			`json:"year,omitempty"`
-	Runtime     Runtime             `json:"runtime,omitempty"`
-	Genres 		[]string 			`json:"genres,omitempty"`
+	Runtime     Runtime             `json:"-"`
+	Subject 	[]string 			`json:"subject,omitempty"`
 	Version 	int32 				`json:"version"`
+}
+
+func (m Course) MarshalJSON() ([]byte, error) {
+	var runtime string
+
+	if m.Runtime != 0 {
+		runtime = fmt.Sprintf("%d mins", m.Runtime)
+	}
+
+	type CourseAlias Course
+	aux := struct { 
+		CourseAlias
+		Runtime string `json:"runtime,omitempty"` 
+	}{
+		CourseAlias: CourseAlias(m),
+		Runtime: runtime, 
+	}
+
+	return json.Marshal(aux)
 }
