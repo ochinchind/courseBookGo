@@ -12,7 +12,7 @@ type Course struct {
 	Title 		string	 			`json:"title"`
 	Year 		int32	 			`json:"year,omitempty"`
 	Runtime     Runtime             `json:"-"`
-	Subject 	[]string 			`json:"subject,omitempty"`
+	Subjects 	[]string 			`json:"subjects,omitempty"`
 	Version 	int32 				`json:"version"`
 }
 

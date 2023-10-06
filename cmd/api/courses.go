@@ -8,7 +8,20 @@ import (
 )
 
 func (app *application) createCourseHandler(w http.ResponseWriter, r *http.Request) {
-	fmt.Fprintln(w, "create a new course") 
+	var input struct {
+		Title	string	`json:"title"`
+		Year	int32	`json:"year"`
+		Runtime int32	`json:"runtime"`
+		Subjects []string `json:"subjects"`
+	}
+
+	err := app.readJSON(w, r, &input)
+
+	if err != nil {
+		app.badRequestResponse(w, r, err)
+		return
+	}
+	fmt.Fprintf(w, "%+v\n", input) 
 }
 
 func (app *application) showCourseHandler(w http.ResponseWriter, r *http.Request) {
@@ -23,7 +36,7 @@ func (app *application) showCourseHandler(w http.ResponseWriter, r *http.Request
 		Title: "The Complete Go Course",
 		Year: 2023,
 		Runtime: 30,
-		Subject: []string{"Go", "Programming"},
+		Subjects: []string{"Go", "Programming"},
 		Version: 1,
 	}
 
