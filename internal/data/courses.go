@@ -3,6 +3,7 @@ package data
 import (
 	"database/sql" 
 	"encoding/json"
+	"errors"
 	"fmt"
 	"time"
 	"coursego/internal/validator"
@@ -66,12 +67,55 @@ func (m CourseModel) Insert(course *Course) error {
 	return m.DB.QueryRow(query, args...).Scan(&course.ID, &course.CreatedAt, &course.Version)
 }
 
-func (m CourseModel) Get(id int64) (*Course, error) { 
-	return nil, nil
+
+func (m CourseModel) Get(id int64) (*Course, error) {
+	if id < 1 {
+		return nil, ErrRecordNotFound 
+	}
+
+	query := `
+		SELECT id, created_at, title, year, runtime, subjects, version FROM courses
+		WHERE id = $1`
+
+	var course Course
+
+	err := m.DB.QueryRow(query, id).Scan( 
+		&course.ID,
+		&course.CreatedAt, 
+		&course.Title,
+		&course.Year, 
+		&course.Runtime, 
+		pq.Array(&course.Subjects), 
+		&course.Version,
+	)
+
+	if err != nil {
+		switch {
+			case errors.Is(err, sql.ErrNoRows):
+				return nil, ErrRecordNotFound 
+			default:
+				return nil, err 
+		}
+	}
+
+	return &course, nil 
 }
 
 func (m CourseModel) Update(course *Course) error { 
-	return nil
+	query := `
+		UPDATE courses
+		SET title = $1, year = $2, runtime = $3, subjects = $4, version = version + 1 WHERE id = $5
+		RETURNING version`
+
+	args := []interface{} { 
+		course.Title,
+		course.Year, 
+		course.Runtime, 
+		pq.Array(course.Subjects), 
+		course.ID,
+	}
+
+	return m.DB.QueryRow(query, args...).Scan(&course.Version)
 }
 
 func (m CourseModel) Delete(id int64) error { 
