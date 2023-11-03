@@ -18,14 +18,16 @@ func (app *application) createCourseHandler(w http.ResponseWriter, r *http.Reque
 	
 
 	err := app.readJSON(w, r, &input)
+
 	if err != nil {
 		app.badRequestResponse(w, r, err)
 		return
 	}
-	course := &data.Course{ 
-		Title: input.Title, 
-		Year: input.Year, 
-		Runtime: input.Runtime, 
+
+	course := &data.Course { 
+		Title: input.Title,
+		Year: input.Year,
+		Runtime: input.Runtime,
 		Subjects: input.Subjects,
 	}
 
@@ -34,6 +36,22 @@ func (app *application) createCourseHandler(w http.ResponseWriter, r *http.Reque
 	if data.ValidateCourse(v, course); !v.Valid() {
 		app.failedValidationResponse(w, r, v.Errors)
 		return
+	}
+
+	err = app.models.Courses.Insert(course)
+
+	if err != nil {
+		app.serverErrorResponse(w, r, err)
+		return
+	}
+
+	headers := make(http.Header)
+	headers.Set("Location", fmt.Sprintf("/v1/courses/%d", course.ID))
+
+	err = app.writeJSON(w, http.StatusCreated, envelope{"course": course}, headers)
+
+	if err != nil {
+		app.serverErrorResponse(w, r, err)
 	}
 
 	fmt.Fprintf(w, "%+v\n", input) 

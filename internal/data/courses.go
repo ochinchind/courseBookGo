@@ -6,6 +6,7 @@ import (
 	"fmt"
 	"time"
 	"coursego/internal/validator"
+	"github.com/lib/pq"
 )
 
 type Course struct {
@@ -56,7 +57,13 @@ type CourseModel struct {
 }
 
 func (m CourseModel) Insert(course *Course) error { 
-	return nil
+	query := `
+		INSERT INTO courses (title, year, runtime, subjects) VALUES ($1, $2, $3, $4)
+		RETURNING id, created_at, version`
+
+	args := []interface{}{course.Title, course.Year, course.Runtime, pq.Array(course.Subjects)}
+
+	return m.DB.QueryRow(query, args...).Scan(&course.ID, &course.CreatedAt, &course.Version)
 }
 
 func (m CourseModel) Get(id int64) (*Course, error) { 
