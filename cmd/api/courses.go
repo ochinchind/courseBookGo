@@ -101,9 +101,9 @@ func (app *application) updateCourseHandler(w http.ResponseWriter, r *http.Reque
 	}
 
 	var input struct {
-		Title string `json:"title"`
-		Year int32 `json:"year"`
-		Runtime data.Runtime `json:"runtime"`
+		Title *string `json:"title"`
+		Year *int32 `json:"year"`
+		Runtime *data.Runtime `json:"runtime"`
 		Subjects []string `json:"subjects"`
 	}
 
@@ -113,10 +113,22 @@ func (app *application) updateCourseHandler(w http.ResponseWriter, r *http.Reque
 		return
 	}
 
-	course.Title = input.Title
-	course.Year = input.Year
-	course.Runtime = input.Runtime
-	course.Subjects = input.Subjects
+	if input.Title != nil { 
+		course.Title = *input.Title
+	}
+
+	if input.Year != nil { 
+		course.Year = *input.Year
+	}
+
+	if input.Runtime != nil {
+		course.Runtime = *input.Runtime 
+	}
+
+	if input.Subjects != nil {
+		course.Subjects = input.Subjects
+	}
+	
 
 	v := validator.New()
 	if data.ValidateCourse(v, course); !v.Valid() { 
