@@ -1,4 +1,5 @@
 package main
+
 import ( 
 	"context"
 	"database/sql"
@@ -8,6 +9,7 @@ import (
 	"net/http" 
 	"os" 
 	"time"
+	"coursego/internal/data"
 	_ "github.com/golang-migrate/migrate/v4/source/file"
 	_ "github.com/lib/pq"
 )
@@ -27,7 +29,8 @@ type config struct {
 
 type application struct {
 	config config
-	logger *log.Logger 
+	logger *log.Logger
+	models data.Models
 }
 
 func main() {
@@ -56,7 +59,8 @@ func main() {
 
 	app := &application{
 		config: cfg,
-		logger: logger, 
+		logger: logger,
+		models: data.NewModels(db),
 	}
 
 	srv := &http.Server{

@@ -1,6 +1,7 @@
 package data
 
 import (
+	"database/sql" 
 	"encoding/json"
 	"fmt"
 	"time"
@@ -48,4 +49,24 @@ func ValidateCourse(v *validator.Validator, course *Course) {
 	v.Check(len(course.Subjects) >= 1, "subjects", "must contain at least 1 genre") 
 	v.Check(len(course.Subjects) <= 5, "subjects", "must not contain more than 5 subjects") 
 	v.Check(validator.Unique(course.Subjects), "subjects", "must not contain duplicate values")
+}
+
+type CourseModel struct { 
+	DB *sql.DB
+}
+
+func (m CourseModel) Insert(course *Course) error { 
+	return nil
+}
+
+func (m CourseModel) Get(id int64) (*Course, error) { 
+	return nil, nil
+}
+
+func (m CourseModel) Update(course *Course) error { 
+	return nil
+}
+
+func (m CourseModel) Delete(id int64) error { 
+	return nil
 }
