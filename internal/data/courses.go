@@ -104,7 +104,7 @@ func (m CourseModel) Get(id int64) (*Course, error) {
 func (m CourseModel) Update(course *Course) error { 
 	query := `
 		UPDATE courses
-		SET title = $1, year = $2, runtime = $3, subjects = $4, version = version + 1 WHERE id = $5
+		SET title = $1, year = $2, runtime = $3, subjects = $4, version = version + 1 WHERE id = $5 AND version = $6
 		RETURNING version`
 
 	args := []interface{} { 
@@ -113,9 +113,19 @@ func (m CourseModel) Update(course *Course) error {
 		course.Runtime, 
 		pq.Array(course.Subjects), 
 		course.ID,
+		course.Version,
 	}
-
-	return m.DB.QueryRow(query, args...).Scan(&course.Version)
+	err := m.DB.QueryRow(query, args...).Scan(&course.Version)
+	if err != nil {
+		switch {
+		case errors.Is(err, sql.ErrNoRows):
+			return ErrEditConflict 
+		default:
+			return err 
+		}
+	}
+	return nil
+	
 }
 
 func (m CourseModel) Delete(id int64) error { 

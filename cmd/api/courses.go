@@ -6,6 +6,7 @@ import (
 	"errors"
 	"fmt"
 	"net/http"
+	"strconv"
 )
 
 func (app *application) createCourseHandler(w http.ResponseWriter, r *http.Request) {
@@ -138,8 +139,20 @@ func (app *application) updateCourseHandler(w http.ResponseWriter, r *http.Reque
 
 	err = app.models.Courses.Update(course) 
 	if err != nil {
-		app.serverErrorResponse(w, r, err)
+		switch {
+			case errors.Is(err, data.ErrEditConflict):
+				app.editConflictResponse(w, r) 
+			default:
+			app.serverErrorResponse(w, r, err) 
+		}
 		return
+	}
+
+	if r.Header.Get("X-Expected-Version") != "" {
+		if strconv.FormatInt(int64(course.Version), 32) != r.Header.Get("X-Expected-Version") { 
+			app.editConflictResponse(w, r)
+			return
+		} 
 	}
 
 	err = app.writeJSON(w, http.StatusOK, envelope{"course": course}, nil) 
