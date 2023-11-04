@@ -184,3 +184,31 @@ func (app *application) deleteCourseHandler(w http.ResponseWriter, r *http.Reque
 		app.serverErrorResponse(w, r, err) 
 	}
 }
+
+func (app *application) listCoursesHandler(w http.ResponseWriter, r *http.Request) {
+
+	var input struct {
+		Title string
+		Subjects []string
+		data.Filters
+	}
+
+	v := validator.New()
+
+	qs := r.URL.Query()
+
+	input.Title = app.readString(qs, "title", "")
+	input.Subjects = app.readCSV(qs, "subjects", []string{})
+
+	input.Filters.Page = app.readInt(qs, "page", 1, v)
+	input.Filters.PageSize = app.readInt(qs, "page_size", 20, v)
+
+	input.Filters.Sort = app.readString(qs, "sort", "id")
+
+	if !v.Valid() {
+		app.failedValidationResponse(w, r, v.Errors)
+		return
+	}
+
+	fmt.Fprintf(w, "%+v\n", input) 
+}
