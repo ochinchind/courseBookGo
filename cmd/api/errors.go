@@ -5,10 +5,6 @@ import (
 	"net/http"
 )
 
-func (app *application) logError(r *http.Request, err error) {
-	app.logger.Println(err) 
-}
-
 func (app *application) errorResponse(w http.ResponseWriter, r *http.Request, status int, message interface{}) {
 	env := envelope{"error": message}
 	err := app.writeJSON(w, status, env, nil)
@@ -48,4 +44,11 @@ func (app *application) failedValidationResponse(w http.ResponseWriter, r *http.
 func (app *application) editConflictResponse(w http.ResponseWriter, r *http.Request) { 
 	message := "unable to update the record due to an edit conflict, please try again" 
 	app.errorResponse(w, r, http.StatusConflict, message)
+}
+
+func (app *application) logError(r *http.Request, err error) {
+	app.logger.PrintError(err, map[string]string{
+	"request_method": r.Method,
+	"request_url": r.URL.String(), 
+	})
 }

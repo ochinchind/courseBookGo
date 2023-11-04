@@ -172,10 +172,9 @@ func (m CourseModel) Delete(id int64) error {
 	return nil
 }
 
-func (m CourseModel) GetAll(title string, subjects []string, filters Filters) ([]*Course, error) {
+func (m CourseModel) GetAll(title string, subjects []string, filters Filters) ([]*Course, Metadata, error) {
 	query := fmt.Sprintf(`
-		SELECT id, created_at, title, year, runtime, subjects, version
-		FROM courses
+		SELECT count(*) OVER(), id, created_at, title, year, runtime, subjects, version FROM courses
 		WHERE (to_tsvector('simple', title) @@ plainto_tsquery('simple', $1) OR $1 = '') AND (subjects @> $2 OR $2 = '{}')
 		ORDER BY %s %s, id ASC
 		LIMIT $3 OFFSET $4`, filters.sortColumn(), filters.sortDirection())
@@ -187,16 +186,18 @@ func (m CourseModel) GetAll(title string, subjects []string, filters Filters) ([
 
 	rows, err := m.DB.QueryContext(ctx, query, args...) 
 	if err != nil {
-		return nil, err 
+		return nil, Metadata{}, err
 	}
 
 	defer rows.Close()
 
+	totalRecords := 0
 	courses := []*Course{}
 
 	for rows.Next() {
 		var course Course
 		err := rows.Scan(
+			&totalRecords,
 			&course.ID, 
 			&course.CreatedAt, 
 			&course.Title, 
@@ -206,15 +207,17 @@ func (m CourseModel) GetAll(title string, subjects []string, filters Filters) ([
 			&course.Version,
 		)
 		if err != nil {
-			return nil, err 
+			return nil, Metadata{}, err 
 		}
 
 		courses = append(courses, &course) 
 	}
 
 	if err = rows.Err(); err != nil {
-		return nil, err 
+		return nil, Metadata{}, err 
 	}
 
-	return courses, nil 
+	metadata := calculateMetadata(totalRecords, filters.Page, filters.PageSize)
+
+	return courses, metadata, nil 
 }

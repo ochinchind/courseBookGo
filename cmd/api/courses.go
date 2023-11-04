@@ -212,13 +212,13 @@ func (app *application) listCoursesHandler(w http.ResponseWriter, r *http.Reques
 		return
 	}
 
-	courses, err := app.models.Courses.GetAll(input.Title, input.Subjects, input.Filters) 
+	courses, metadata, err := app.models.Courses.GetAll(input.Title, input.Subjects, input.Filters) 
 	if err != nil {
 		app.serverErrorResponse(w, r, err)
 		return
 	}
 
-	err = app.writeJSON(w, http.StatusOK, envelope{"courses": courses}, nil) 
+	err = app.writeJSON(w, http.StatusOK, envelope{"courses": courses, "metadata": metadata}, nil) 
 	if err != nil {
 		app.serverErrorResponse(w, r, err) 
 	}
