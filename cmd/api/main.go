@@ -4,6 +4,7 @@ import (
 	"context"
 	"coursego/internal/data"
 	"coursego/internal/jsonlog"
+	"coursego/internal/mailer"
 	"database/sql"
 	"flag"
 	"os"
@@ -29,12 +30,20 @@ type config struct {
 		burst int 
 		enabled bool
 	}
+	smtp struct {
+		host  string
+		port  int
+		username  string
+		password  string
+		sender string
+	}
 }
 
 type application struct {
 	config config
 	logger *jsonlog.Logger
 	models data.Models
+	mailer mailer.Mailer
 }
 
 func main() {
@@ -45,9 +54,17 @@ func main() {
 	flag.IntVar(&cfg.db.maxOpenConns, "db-max-open-conns", 25, "PostgreSQL max open connections") 
 	flag.IntVar(&cfg.db.maxIdleConns, "db-max-idle-conns", 25, "PostgreSQL max idle connections") 
 	flag.StringVar(&cfg.db.maxIdleTime, "db-max-idle-time", "15m", "PostgreSQL max connection idle time")
-	flag.Float64Var(&cfg.limiter.rps, "limiter-rps", 2, "Rate limiter maximum requests per second") 
-	flag.IntVar(&cfg.limiter.burst, "limiter-burst", 4, "Rate limiter maximum burst") 
+
 	flag.BoolVar(&cfg.limiter.enabled, "limiter-enabled", true, "Enable rate limiter")
+	flag.Float64Var(&cfg.limiter.rps, "limiter-rps", 2, "Rate limiter maximum requests per second") 
+	flag.IntVar(&cfg.limiter.burst, "limiter-burst", 4, "Rate limiter maximum burst")
+
+	flag.StringVar(&cfg.smtp.host, "smtp-host", "smtp.mailtrap.io", "SMTP host")
+	flag.IntVar(&cfg.smtp.port, "smtp-port", 25, "SMTP port")
+	flag.StringVar(&cfg.smtp.username, "smtp-username", "e68105cf56d097", "SMTP username") 
+	flag.StringVar(&cfg.smtp.password, "smtp-password", "a8e1f1a0f31709", "SMTP password") 
+	flag.StringVar(&cfg.smtp.sender, "smtp-sender", "Greenlight <no-reply@coursego.com>", "SMTP sender")
+
 	flag.Parse()
 	logger := jsonlog.New(os.Stdout, jsonlog.LevelInfo)
 	db, err := openDB(cfg) 
@@ -60,6 +77,7 @@ func main() {
 		config: cfg,
 		logger: logger,
 		models: data.NewModels(db), 
+		mailer: mailer.New(cfg.smtp.host, cfg.smtp.port, cfg.smtp.username, cfg.smtp.password, cfg.smtp.sender),
 	}
 
 	err = app.serve() 
