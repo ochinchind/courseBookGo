@@ -13,4 +13,5 @@ require (
 require (
 	github.com/golang-migrate/migrate/v4 v4.16.2
 	github.com/lib/pq v1.10.2 // indirect
+	golang.org/x/time v0.3.0
 )
