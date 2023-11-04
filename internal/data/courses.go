@@ -1,12 +1,14 @@
 package data
 
 import (
-	"database/sql" 
+	"context"
+	"coursego/internal/validator"
+	"database/sql"
 	"encoding/json"
 	"errors"
 	"fmt"
 	"time"
-	"coursego/internal/validator"
+
 	"github.com/lib/pq"
 )
 
@@ -64,7 +66,11 @@ func (m CourseModel) Insert(course *Course) error {
 
 	args := []interface{}{course.Title, course.Year, course.Runtime, pq.Array(course.Subjects)}
 
-	return m.DB.QueryRow(query, args...).Scan(&course.ID, &course.CreatedAt, &course.Version)
+	ctx, cancel := context.WithTimeout(context.Background(), 3*time.Second)
+	defer cancel()
+
+
+	return m.DB.QueryRowContext(ctx, query, args...).Scan(&course.ID, &course.CreatedAt, &course.Version)
 }
 
 
@@ -77,9 +83,13 @@ func (m CourseModel) Get(id int64) (*Course, error) {
 		SELECT id, created_at, title, year, runtime, subjects, version FROM courses
 		WHERE id = $1`
 
+	ctx, cancel := context.WithTimeout(context.Background(), 3*time.Second)
+
+	defer cancel()
+
 	var course Course
 
-	err := m.DB.QueryRow(query, id).Scan( 
+	err := m.DB.QueryRowContext(ctx, query, id).Scan(
 		&course.ID,
 		&course.CreatedAt, 
 		&course.Title,
@@ -115,7 +125,12 @@ func (m CourseModel) Update(course *Course) error {
 		course.ID,
 		course.Version,
 	}
-	err := m.DB.QueryRow(query, args...).Scan(&course.Version)
+
+	ctx, cancel := context.WithTimeout(context.Background(), 3*time.Second)
+
+	defer cancel()
+
+	err := m.DB.QueryRowContext(ctx, query, args...).Scan(&course.Version)
 	if err != nil {
 		switch {
 		case errors.Is(err, sql.ErrNoRows):
@@ -136,7 +151,11 @@ func (m CourseModel) Delete(id int64) error {
 		DELETE FROM courses
 		WHERE id = $1`
 
-	result, err := m.DB.Exec(query, id)
+	ctx, cancel := context.WithTimeout(context.Background(), 3*time.Second)
+
+	defer cancel()
+
+	result, err := m.DB.ExecContext(ctx, query, id)
 	if err != nil {
 		return err
 	}
