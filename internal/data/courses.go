@@ -171,3 +171,45 @@ func (m CourseModel) Delete(id int64) error {
 
 	return nil
 }
+
+func (m CourseModel) GetAll(title string, subjects []string, filters Filters) ([]*Course, error) {
+	query := `
+		SELECT id, created_at, title, year, runtime, subjects, version FROM courses
+		ORDER BY id`
+
+	ctx, cancel := context.WithTimeout(context.Background(), 3*time.Second) 
+	defer cancel()
+
+	rows, err := m.DB.QueryContext(ctx, query)
+	if err != nil {
+		return nil, err 
+	}
+
+	defer rows.Close()
+
+	courses := []*Course{}
+
+	for rows.Next() {
+		var course Course
+		err := rows.Scan(
+			&course.ID, 
+			&course.CreatedAt, 
+			&course.Title, 
+			&course.Year, 
+			&course.Runtime, 
+			pq.Array(&course.Subjects), 
+			&course.Version,
+		)
+		if err != nil {
+			return nil, err 
+		}
+
+		courses = append(courses, &course) 
+	}
+
+	if err = rows.Err(); err != nil {
+		return nil, err 
+	}
+
+	return courses, nil 
+}
