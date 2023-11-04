@@ -173,11 +173,11 @@ func (m CourseModel) Delete(id int64) error {
 }
 
 func (m CourseModel) GetAll(title string, subjects []string, filters Filters) ([]*Course, error) {
-	query := `
+	query := fmt.Sprintf(`
 		SELECT id, created_at, title, year, runtime, subjects, version
 		FROM courses
 		WHERE (to_tsvector('simple', title) @@ plainto_tsquery('simple', $1) OR $1 = '') AND (subjects @> $2 OR $2 = '{}')
-		ORDER BY id`
+		ORDER BY %s %s, id ASC`, filters.sortColumn(), filters.sortDirection())
 
 	ctx, cancel := context.WithTimeout(context.Background(), 3*time.Second) 
 	defer cancel()
