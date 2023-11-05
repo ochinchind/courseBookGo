@@ -15,11 +15,11 @@ func (app *application) routes() http.Handler {
 	router.HandlerFunc(http.MethodGet, "/v1/healthcheck", app.healthcheckHandler) 
 
 
-	router.HandlerFunc(http.MethodGet, "/v1/courses", app.requireActivatedUser(app.listCoursesHandler))
-	router.HandlerFunc(http.MethodPost, "/v1/courses", app.requireActivatedUser(app.createCourseHandler))
-	router.HandlerFunc(http.MethodGet, "/v1/courses/:id", app.requireActivatedUser(app.showCourseHandler))
-	router.HandlerFunc(http.MethodPatch, "/v1/courses/:id", app.requireActivatedUser(app.updateCourseHandler))
-	router.HandlerFunc(http.MethodDelete, "/v1/courses/:id", app.requireActivatedUser(app.deleteCourseHandler))
+	router.HandlerFunc(http.MethodGet, "/v1/courses", app.requirePermission("courses:read", app.listCoursesHandler))
+	router.HandlerFunc(http.MethodPost, "/v1/courses", app.requirePermission("courses:write", app.createCourseHandler))
+	router.HandlerFunc(http.MethodGet, "/v1/courses/:id", app.requirePermission("courses:read", app.showCourseHandler))
+	router.HandlerFunc(http.MethodPatch, "/v1/courses/:id", app.requirePermission("courses:write", app.updateCourseHandler))
+	router.HandlerFunc(http.MethodDelete, "/v1/courses/:id", app.requirePermission("courses:write", app.deleteCourseHandler))
 
 	router.HandlerFunc(http.MethodPost, "/v1/users", app.registerUserHandler)
 	router.HandlerFunc(http.MethodPut, "/v1/users/activated", app.activateUserHandler)
