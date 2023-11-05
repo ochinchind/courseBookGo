@@ -1,1 +1,1 @@
-export GREENLIGHT_DB_DSN='postgres://greenlight:pa55word@localhost/coursego?sslmode=disable'
+export GREENLIGHT_DB_DSN='postgres://greenlight:pa55word@fullstack-postgres/coursego?sslmode=disable'
